@@ -29,12 +29,19 @@ namespace Silenium
             var av=new Avito();
             Stopwatch st=new Stopwatch();
             st.Start();
-            var temp=av.GetAdList("http://www.avito.ru/pskov");
+            var url = "http://www.avito.ru/pskov";
+            
+            var temp=av.GetAdList(url,progressBar1);
             st.Stop();
             var stds = st.Elapsed.ToString();
             //save
             SaveToFile.SaveExcel2007(temp,Environment.CurrentDirectory+@"\avito1.xlsx","Avito");
             SaveToFile.SaveCSV(temp, Environment.CurrentDirectory + @"\avito.csv");
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

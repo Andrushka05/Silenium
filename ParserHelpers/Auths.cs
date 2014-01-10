@@ -1,38 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OpenQA.Selenium;
+﻿
+using org.openqa.selenium;
+
 
 namespace ParserHelpers
 {
     public class Auths
     {
-        public Auths(IWebDriver driver, By loginBy, By passBy, By buttonBy)
+        public Auths(WebDriver driver, By loginBy, By passBy, By buttonBy)
         {
             _driver = driver;
-            _loginButton = _driver.FindElement(buttonBy);
-            _login = _driver.FindElement(loginBy);
-            _pass = _driver.FindElement(passBy);
+            _loginButton = _driver.findElement(buttonBy);
+            _login = _driver.findElement(loginBy);
+            _pass = _driver.findElement(passBy);
         }
 
-        private IWebDriver _driver;
-        private IWebElement _loginButton;
-        private IWebElement _login;
-        private IWebElement _pass;
+        private WebDriver _driver;
+        private WebElement _loginButton;
+        private WebElement _login;
+        private WebElement _pass;
 
         public void LogIn(string login,string pass)
         {
-            _login.SendKeys(login);
-            _pass.SendKeys(pass);
-            _loginButton.Click();
+            _login.sendKeys(login);
+            _pass.sendKeys(pass);
+            _loginButton.click();
         }
 
-        public static void LogOut(IWebDriver driver, By logOutBy)
+        public static void LogOut(WebDriver driver, By logOutBy)
         {
-            IWebElement logout = driver.FindElement(logOutBy);
-            logout.Click();
+            WebElement logout = driver.findElement(logOutBy);
+            logout.click();
         }
     }
 }

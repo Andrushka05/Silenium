@@ -38,6 +38,7 @@
     </Reference>
     <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>E:\библиотеки\ikvm-7.2.4630.5\bin\ICSharpCode.SharpZipLib.dll</HintPath>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="IKVM.AWT.WinForms">
       <HintPath>E:\библиотеки\ikvm-7.2.4630.5\bin\IKVM.AWT.WinForms.dll</HintPath>
@@ -130,6 +131,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
