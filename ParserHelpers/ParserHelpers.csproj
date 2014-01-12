@@ -154,18 +154,28 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="WebDriver">
-      <HintPath>E:\библиотеки\selenium-dotnet-2.39.0\net40\WebDriver.dll</HintPath>
+    <Reference Include="WebDriver, Version=2.39.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Selenium.WebDriver.2.39.0\lib\net40\WebDriver.dll</HintPath>
     </Reference>
     <Reference Include="webdriver-all">
       <HintPath>..\packages\webdriver-all.dll</HintPath>
     </Reference>
+    <Reference Include="WebDriver.Support">
+      <HintPath>..\packages\Selenium.Support.2.39.0\lib\net40\WebDriver.Support.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Ad.cs" />
     <Compile Include="Auths.cs" />
+    <Compile Include="Av.cs" />
     <Compile Include="Avito.cs" />
     <Compile Include="HtmlAgility.cs" />
+    <Compile Include="IAd.cs" />
+    <Compile Include="Ir.cs" />
+    <Compile Include="Irr.cs" />
     <Compile Include="Item.cs" />
+    <Compile Include="Link.cs" />
     <Compile Include="SaveToFile.cs" />
     <Compile Include="Selen.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

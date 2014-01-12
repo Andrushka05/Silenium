@@ -184,7 +184,7 @@ namespace ParserHelpers
 
                 //Create a sheet
                 p.Workbook.Worksheets.Add("Sample WorkSheet");
-                ExcelWorksheet ws = p.Workbook.Worksheets["1"];
+                ExcelWorksheet ws = p.Workbook.Worksheets.FirstOrDefault();
                 ws.Name = itemType.Name; //Setting Sheet's name
                 ws.Cells.Style.Font.Size = 11; //Default font size for whole sheet
                 ws.Cells.Style.Font.Name = "Calibri"; //Default Font name for whole sheet

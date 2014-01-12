@@ -7,12 +7,21 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using com.gargoylesoftware.htmlunit;
+using com.sun.org.apache.xerces.@internal.impl;
 using ikvm.extensions;
-//using OpenQA.Selenium;
+using OpenQA.Selenium;
+using java.util.concurrent;
+
+using OpenQA.Selenium.Support.UI;
 using org.openqa.selenium;
+using org.openqa.selenium.android;
 using org.openqa.selenium.firefox;
 using org.openqa.selenium.htmlunit;
 using org.openqa.selenium.ie;
+using org.openqa.selenium.@internal.seleniumemulation;
+using org.openqa.selenium.phantomjs;
+using org.openqa.selenium.remote;
 using By = org.openqa.selenium.By;
 
 //using OpenQA.Selenium;
@@ -23,116 +32,179 @@ using By = org.openqa.selenium.By;
 
 namespace ParserHelpers
 {
-	public class Avito
+	public class Avito:Ad<Av>
 	{
-		public static List<string> CityList()
+        public Avito()
+        {
+            //_driver = new FirefoxDriver();
+            //_driver = new RemoteWebDriver(DesiredCapabilities.HtmlUnitWithJavaScript());
+            //_driver.Navigate().GoToUrl("http://www.avito.ru/");
+            _driver = InitWebDriver();
+            //_driver.setJavascriptEnabled(true);
+            _driver.get("http://m.avito.ru");
+            _driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+        }
+        public override List<Link> CityList()
 		{
-
-			return null;
+            var host = "http://m.avito.ru";
+            var driver =InitWebDriver();
+            driver.get(host);
+            var html = new HtmlAgilityPack.HtmlDocument();
+            html.LoadHtml(driver.getPageSource());
+            var aList = html.DocumentNode.SelectNodes("//a[contains(concat(' ', @href, ' '), 'location')]");
+            var res = new List<Link>();
+            if (aList != null)
+            {
+                foreach (var a in aList)
+                {
+                    var temp = a.Attributes["href"].Value.Trim();
+                    var name = a.InnerText.Trim();
+                    res.Add(!temp.Contains("avito.ru")
+                        ? new Link() { Url = host + temp, Name = name }
+                        : new Link() { Url = temp, Name = name });
+                }
+            }
+            return res;
 		}
-
-		public static List<string> CategoryList()
+        public override List<Link> CategoryList(string link)
 		{
-
-			return null;
+		    var l = link.Insert(link.IndexOf(".ru/") + 4, "catalog/").Replace("location/","");
+		    var host = l.Substring(0, l.IndexOf(".ru/") + 3);
+		    var driver = InitWebDriver();
+            driver.get(l);
+		    var html = new HtmlAgilityPack.HtmlDocument();
+            html.LoadHtml(driver.getPageSource());
+            var aList = html.DocumentNode.SelectNodes("//a[contains(concat(' ', @href, ' '), 'catalog')]");
+		    var res = new List<Link>();
+		    if (aList != null)
+		    {
+		        foreach (var a in aList)
+		        {
+                    var temp = a.Attributes["href"].Value.Replace("catalog/","").Trim();
+		            var name = a.InnerText.Trim();
+		            res.Add(!temp.Contains("avito.ru")
+		                ? new Link() {Url = host + temp, Name = name}
+		                : new Link() {Url = temp, Name = name});
+		        }
+		    }
+			return res;
 		}
-
-		public static List<string> MetroList()
+        public override void Login(string email, string pass)
 		{
-
-			return null;
-		}
-
-		public Avito()
-		{
-			//_driver = new FirefoxDriver();
-			//_driver = new RemoteWebDriver(DesiredCapabilities.HtmlUnitWithJavaScript());
-			//_driver.Navigate().GoToUrl("http://www.avito.ru/");
-			_driver = new HtmlUnitDriver();
-			_driver.get("http://m.avito.ru");
-		}
-
-		private WebDriver _driver;
-		public void Login(string email, string pass)
-		{
-
-			var loginIn = _driver.findElement(By.linkText("Войти"));
+            var loginIn = _driver.findElement(By.linkText("Войти"));
 			//https://www.avito.ru/profile/login?next=%2Fprofile
 			_driver.get(loginIn.getAttribute("href"));
 			var login = new Auths(_driver, By.name("login"), By.name("password"), By.partialLinkText("Войти"));
 			login.LogIn(email, pass);
 		}
-
-		public void LogOut()
+        public override void LogOut()
 		{
 			//Auths.LogOut(_driver,By.);
 		}
-
-		public int CountAds(string url)
+        public static int CountAds(string url)
 		{
-			//_driver.get(url);
-			var countSpan =
-					_driver.findElement(By.xpath("//span[contains(concat(' ', @class, ' '), 'catalog_breadcrumbs-count')]"));
+		    var driver = InitWebDriver();
+			driver.get(url.replace("m.","www."));
+			var countSpan = driver.findElement(By.xpath("//span[contains(concat(' ', @class, ' '), 'catalog_breadcrumbs-count')]"));
 			var res = Regex.Replace(countSpan.getText(), @"[^\d]", "");
 			var r = 0;
 			Int32.TryParse(res, out r);
 			return r;
 		}
-		public List<Av> GetAdList(string url, ProgressBar progress, ref string error)
+		public override List<Av> GetAdList(string url, ProgressBar progress, ref string error)
 		{
 			var adList = new List<Av>();
-
-			progress.Maximum = 10000;//CountAds(url);
-			_driver.get(url);
+            //progress.Maximum = CountAds(url);
+            
+            var profile = new OpenQA.Selenium.Firefox.FirefoxProfile();
+            //String PROXY = "140.119.24.11:80";
+            //var proxy = new OpenQA.Selenium.Proxy
+            //{
+            //    HttpProxy = PROXY,
+            //    FtpProxy = PROXY,
+            //    SslProxy = PROXY
+            //};
+            //profile.SetProxyPreferences(proxy);
+            IWebDriver dr = new OpenQA.Selenium.Firefox.FirefoxDriver(profile);
+            dr.Navigate().GoToUrl(url);
+		    dr.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(120));
+			//_driver.get(url);
 			int countError = 0;
 			for (int i = 1; ; i++)
 			{
-				try
-				{
-					if (i != 1)
-						_driver.get(url + "?p=" + i);
-					var r = new Random();
-					var timeout = r.Next(4000, 7000);
-					Thread.Sleep(timeout);
+                try
+                {
+                    //if (i != 1)
+                    //    _driver.get(url + "?p=" + i);
+                    //var r = new Random();
+                    //var timeout = r.Next(2000, 7000);
+                    //Thread.Sleep(timeout);
 					//Получаем ссылки на объявления
-					var adLinks = _driver.findElements(By.xpath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a"));//(By.xpath("//h3[@class='title']/a"));
-					//var links = adLinks.toArray(); //.Select>(x => x.GetAttribute("href")).ToList();
-					//foreach (WebElement link in links)
-					//{
-
-					for (int j = 0; j < adLinks.size(); j++)
+                    var adLinks = dr.FindElements(OpenQA.Selenium.By.XPath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a"));//_driver.findElements(By.xpath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a"));//(By.xpath("//h3[@class='title']/a"));
+					for (int j = 0; j < adLinks.Count; j++)
 					{
-						var links = _driver.findElements(By.xpath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a"));
-						WebElement link = (WebElement)links.get(j);
-						Thread.Sleep(1000);
+					    var links =
+					        dr.FindElements(OpenQA.Selenium.By.XPath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a")); //_driver.findElements(By.xpath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a"));
+					    if (links.Count == 0)
+					    {
+					        Thread.Sleep(3000);
+                            links =dr.FindElements(OpenQA.Selenium.By.XPath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a"));
+					    }
+                        var link = links[j];
+						//Thread.Sleep(1000);
 						//_driver.Navigate().GoToUrl(link.Replace("www", "m"));
-						var l = link.ToString();
-						var begin = l.indexOf("href");
-						var href =l.Substring(begin + 5, l.IndexOf("\"", begin + 8) - begin - 5).Replace("\"", "").Trim();
-						if (href.Contains("www.avito.ru"))
-							href = href.Replace("www", "m");
-						else
-							href = "https://m.avito.ru" + href;
-						link.click();
+                        var l = link.GetAttribute("href");
+                        //var begin = l.indexOf("href");
+                        //var href =l.Substring(begin + 5, l.IndexOf("\"", begin + 8) - begin - 5).Replace("\"", "").Trim();
+                        //if (href.Contains("www.avito.ru"))
+                        //    href = href.Replace("www", "m");
+                        //else
+                        //    href = "https://m.avito.ru" + href;
+						link.Click();
+                        Thread.Sleep(1000);
 						//_driver.get(href);
-						string name = "";
 						var avito = new Av();
-						avito.Url = href.Replace("/m.", "/www.");
-						var temps = _driver.getPageSource();
+						avito.Url = l.Replace("/m.", "/www.");
+					    
+					    var element =
+					        dr.FindElement(OpenQA.Selenium.By.XPath("//div[contains(concat(' ', @class, ' '), 'info-price')]"));//_driver.findElement(By.xpath("//div[contains(concat(' ', @class, ' '), 'info-price')]"));
+                        element.Click();
+                        
+                        //var javascript = new JavascriptLibrary();
+                        //javascript.callEmbeddedSelenium(_driver, "triggerEvent", element, "focus");
+                        Thread.Sleep(300);
+                        //((JavascriptExecutor)_driver).executeScript("return document.getElementsByName('a')[0].focus()");
+ 
 						try
 						{
-							WebElement p =
-									_driver.findElement(
-											By.xpath("//li[contains(concat(' ', @class, ' '), 'action-show-number')]/a"));
-							p.click();
-							Thread.Sleep(500);
-							var html = new HtmlAgilityPack.HtmlDocument();
-							html.LoadHtml(_driver.getPageSource());
-
+						    try
+						    {
+						        var p =
+						            dr.FindElement(
+						                OpenQA.Selenium.By.XPath("//li[contains(concat(' ', @class, ' '), 'action-show-number')]/a"));
+						            //_driver.findElement(By.xpath("//li[contains(concat(' ', @class, ' '), 'action-show-number')]/a"));
+						        p.Click();
+						        var p2 = dr.FindElement(
+						            OpenQA.Selenium.By.XPath("//li[contains(concat(' ', @class, ' '), 'action-show-number')]/a"));
+						        if (p2.Text.Contains("По") || p2.Text.Contains("Попробуйте"))
+						        {
+                                    Thread.Sleep(1500);
+                                    p =dr.FindElement(
+                                        OpenQA.Selenium.By.XPath("//li[contains(concat(' ', @class, ' '), 'action-show-number')]/a"));
+                                    p.Click();
+						        }
+						    }
+						    catch (Exception ex)
+						    {
+                                error += "Не взял номер на странице: " + l + "\r\n";
+						    }
+                            Thread.Sleep(1000);
+						    var html = new HtmlAgilityPack.HtmlDocument();
+                            html.LoadHtml(dr.PageSource);
 							var price = HtmlAgility.GetItemInnerText(html,"//div[contains(concat(' ', @class, ' '), 'info-price')]");
 							var title = HtmlAgility.GetItemsInnerText(html,"//header[contains(concat(' ', @class, ' '), 'single-item-header')]/span", "", null, " ");
 							var desc = HtmlAgility.GetItemInnerText(html,"//div[contains(concat(' ', @class, ' '), 'description-wrapper')]");
-							var city = HtmlAgility.GetItemInnerText(html,"//div[contains(concat(' ', @class, ' '), 'address-person-params')]/span");
+							var city = HtmlAgility.GetItemsInnerText(html,"//div[contains(concat(' ', @class, ' '), 'address-person-params')]/span","",null,"");
 							var id = HtmlAgility.GetItemInnerText(html,
 									"//span[contains(concat(' ', @class, ' '), 'item-id')]");
 							var countView = HtmlAgility.GetItemInnerText(html,
@@ -145,7 +217,7 @@ namespace ParserHelpers
 									"//div[contains(concat(' ', @class, ' '), 'person-name')]");
 							var catalogPath = HtmlAgility.GetItemsInnerText(html,
 									"//span[contains(concat(' ', @class, ' '), 'param')]", "", null, "/");
-							name = HtmlAgility.GetItemInnerText(html,
+							var name = HtmlAgility.GetItemInnerText(html,
 									"//div[contains(concat(' ', @class, ' '), 'person-name')]");
 							var phone = HtmlAgility.GetItemInnerText(html,
 									"//li[contains(concat(' ', @class, ' '), 'action-show-number')]/a");
@@ -175,66 +247,63 @@ namespace ParserHelpers
 							avito.Author = HtmlAgility.ReplaceWhiteSpace(name.Replace("\r", "").Replace("\n", "").Trim());
 							//.getText().Trim();
 							avito.Price = price.Trim();
+                            
 							avito.Phone = phone.Replace(" ", "").Replace("-", "");
 							countError = 0;
 							
 						}
 						catch (Exception ex)
 						{
-							error +="Ошибка на странице: "+href+ "\r\n";
+							error +="Ошибка на странице: "+l+ "\r\n";
 							
 						}
 						adList.Add(avito);
 						progress.Value++;
 						progress.Refresh();
-						_driver.navigate().back();
-						_driver.navigate().back();
-						var temps1 = _driver.getPageSource();
-						try
-						{
-							var aNext = _driver.findElement(By.xpath("//li[contains(concat(' ', @class, ' '), 'page-next')]/a"));
-						}
-						catch (Exception ex)
-						{
-							error += "Эта страница последняя: " + url + "?p=" + i + "\r\n";
-							break;
-						}
-					}
-				}
-				catch (Exception ex)
-				{
-					countError++;
-					error += "Не удалось загрузить страницу: " + url + "?p=" + i + "\r\n";
-					if (countError == 20)
-						break;
-				}
+                        dr.Navigate().Back();
+                        Thread.Sleep(800);
+						//var temps1 = dr.PageSource; //_driver.getPageSource();
+                    }
+                    try
+                    {
+                        var aNext =
+                            dr.FindElement(
+                                OpenQA.Selenium.By.XPath("//li[contains(concat(' ', @class, ' '), 'page-next')]/a"));//_driver.findElement(By.xpath("//li[contains(concat(' ', @class, ' '), 'page-next')]/a"));
+                        aNext.Click();
+                        var temps2 = dr.PageSource; //_driver.getPageSource();
+                    }
+                    catch (Exception ex)
+                    {
+                        error += "Эта страница последняя: " + url + "?p=" + i + "\r\n";
+                        break;
+                    }
+                    SaveToFile.SaveExcel2007(adList, Environment.CurrentDirectory + @"\avito1.xlsx", "Avito");
+                    SaveToFile.SaveCSV(adList, Environment.CurrentDirectory + @"\avito.csv");
+                    adList=new List<Av>();
+                
+                }
+                catch (Exception ex)
+                {
+                    countError++;
+                    error += "Не удалось загрузить страницу: " + url + "?p=" + i + "\r\n";
+                    if (countError == 20)
+                        break;
+                    else if(countError>2)
+                        dr.Navigate().GoToUrl(url + "?p=" + (i+1));
+                    else
+                        dr.Navigate().Back();
+                }
 			}
 
 			_driver.quit();
 			return adList;
 		}
-
-
-		public void PlaceAd()
+        public override bool PlaceAd(List<Av> adList)
 		{
 			//var placeAdButt = _driver.FindElement(By.Name("Подать объявление"));
 			//http://www.avito.ru/additem
-
+		    return false;
 		}
-
-		//public List<Av> 
-	}
-
-	public class Av : Item
-	{
-		public string Phone { get; set; }
-		public string Author { get; set; }
-		public string City { get; set; }
-		public string Metro { get; set; }
-		public string ContactName { get; set; }
-		public string CountShow { get; set; }
-		public string Date { get; set; }
-		public string ShopName { get; set; }
-	}
+    }
 
 }
