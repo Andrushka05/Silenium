@@ -32,14 +32,14 @@ namespace Silenium
             var url = "http://m.avito.ru/pskov";
             var error = "";
             var catalogsList = av.CategoryList(url);
-            progressBar1.Maximum = 35000;//Avito.CountAds(url);
+            progressBar1.Maximum = 100000;//Avito.CountAds(url);
             foreach (var link in catalogsList)
             {
                 var temp = av.GetAdList(link.Url, progressBar1, ref error);
-                if (error.Length > 0)
-                    MessageBox.Show(error);
+                
             }
-
+            if (error.Length > 0)
+                MessageBox.Show(error);
             st.Stop();
             var stds = st.Elapsed.ToString();
             //save
@@ -136,6 +136,12 @@ namespace Silenium
             var stds = st.Elapsed.ToString();
 
             
+        }
+
+        private void bProxy_Click(object sender, EventArgs e)
+        {
+            ProxyParser pr=new ProxyParser();
+            pr.GetProxy("http://www.my-proxy.com/free-elite-proxy.html");
         }
 
 

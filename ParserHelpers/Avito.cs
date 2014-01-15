@@ -145,7 +145,7 @@ namespace ParserHelpers
 					{
 					    var links =
 					        dr.FindElements(OpenQA.Selenium.By.XPath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a")); //_driver.findElements(By.xpath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a"));
-					    if (links.Count == 0)
+					    if (links.Count == 0||links.Count<j)
 					    {
 					        Thread.Sleep(3000);
                             links =dr.FindElements(OpenQA.Selenium.By.XPath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a"));
@@ -254,7 +254,7 @@ namespace ParserHelpers
 						}
 						catch (Exception ex)
 						{
-							error +="Ошибка на странице: "+l+ "\r\n";
+							error +="Ошибка на странице: "+l+ "\r\nlog:"+ex+"\r\n";
 							
 						}
 						adList.Add(avito);
@@ -262,6 +262,7 @@ namespace ParserHelpers
 						progress.Refresh();
                         dr.Navigate().Back();
                         Thread.Sleep(800);
+                        SaveToFile.SaveExcel2007(adList, Environment.CurrentDirectory + @"\avito1.xlsx", "Avito");
 						//var temps1 = dr.PageSource; //_driver.getPageSource();
                     }
                     try
@@ -274,28 +275,29 @@ namespace ParserHelpers
                     }
                     catch (Exception ex)
                     {
-                        error += "Эта страница последняя: " + url + "?p=" + i + "\r\n";
+                        error += "Эта страница последняя: " + url + "?p=" + i + "\r\nlog:" + ex + "\r\n";
                         break;
                     }
                     SaveToFile.SaveExcel2007(adList, Environment.CurrentDirectory + @"\avito1.xlsx", "Avito");
-                    SaveToFile.SaveCSV(adList, Environment.CurrentDirectory + @"\avito.csv");
+                    //SaveToFile.SaveCSV(adList, Environment.CurrentDirectory + @"\avito.csv");
                     adList=new List<Av>();
-                
+
                 }
                 catch (Exception ex)
                 {
                     countError++;
-                    error += "Не удалось загрузить страницу: " + url + "?p=" + i + "\r\n";
-                    if (countError == 20)
+                    error += "Не удалось загрузить страницу: " + url + "?p=" + i + "\r\nlog:" + ex + "\r\n";
+                    if (countError == 7)
                         break;
-                    else if(countError>2)
-                        dr.Navigate().GoToUrl(url + "?p=" + (i+1));
-                    else
-                        dr.Navigate().Back();
+                    else if (countError > 2)
+                        dr.Navigate().GoToUrl(url + "?p=" + (i + 1));
+
                 }
 			}
 
 			_driver.quit();
+            _driver.close();
+            
 			return adList;
 		}
         public override bool PlaceAd(List<Av> adList)

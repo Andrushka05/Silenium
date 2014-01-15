@@ -148,7 +148,7 @@ namespace ParserHelpers
                 }
             }
 
-            Parallel.ForEach(list, x =>
+            foreach(var x in list)
             {
                 DataRow newRow = dt.NewRow();
                 //newRow["CompanyID"] = "NewCompanyID";
@@ -174,53 +174,62 @@ namespace ParserHelpers
                     }
                 }
                 dt.Rows.Add(newRow);
-            });
+            }
 
             using (var p = new ExcelPackage(File.Exists(path) ? new FileInfo(path) : null))
             {
                 //Here setting some document properties
                 //p.Workbook.Properties.Author = "Zeeshan Umar";
                 p.Workbook.Properties.Title = nameBook;
-
+                ExcelWorksheet ws = null;
                 //Create a sheet
-                p.Workbook.Worksheets.Add("Sample WorkSheet");
-                ExcelWorksheet ws = p.Workbook.Worksheets.FirstOrDefault();
-                ws.Name = itemType.Name; //Setting Sheet's name
-                ws.Cells.Style.Font.Size = 11; //Default font size for whole sheet
-                ws.Cells.Style.Font.Name = "Calibri"; //Default Font name for whole sheet
-
-                //Merging cells and create a center heading for out table
-                //ws.Cells[1, 1].Value = "Sample DataTable Export";
-                //ws.Cells[1, 1, 1, dt.Columns.Count].Merge = true;
-                //ws.Cells[1, 1, 1, dt.Columns.Count].Style.Font.Bold = true;
-                //ws.Cells[1, 1, 1, dt.Columns.Count].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
                 int colIndex = 1;
-                int rowIndex = 1;
-
-                foreach (DataColumn dc in dt.Columns) //Creating Headings
+                    int rowIndex = 1;
+                if (p.Workbook.Worksheets.Count == 0)
                 {
-                    var cell = ws.Cells[rowIndex, colIndex];
+                    ws = p.Workbook.Worksheets.Add("Sample WorkSheet");
 
-                    //Setting the background color of header cells to Gray
-                    var fill = cell.Style.Fill;
-                    fill.PatternType = ExcelFillStyle.Solid;
-                    fill.BackgroundColor.SetColor(Color.Gray);
+                    ws.Name = itemType.Name; //Setting Sheet's name
+                    ws.Cells.Style.Font.Size = 11; //Default font size for whole sheet
+                    ws.Cells.Style.Font.Name = "Calibri"; //Default Font name for whole sheet
+
+                    //Merging cells and create a center heading for out table
+                    //ws.Cells[1, 1].Value = "Sample DataTable Export";
+                    //ws.Cells[1, 1, 1, dt.Columns.Count].Merge = true;
+                    //ws.Cells[1, 1, 1, dt.Columns.Count].Style.Font.Bold = true;
+                    //ws.Cells[1, 1, 1, dt.Columns.Count].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                    colIndex = 1;
+                    rowIndex = 1;
+
+                    foreach (DataColumn dc in dt.Columns) //Creating Headings
+                    {
+                        var cell = ws.Cells[rowIndex, colIndex];
+
+                        //Setting the background color of header cells to Gray
+                        var fill = cell.Style.Fill;
+                        fill.PatternType = ExcelFillStyle.Solid;
+                        fill.BackgroundColor.SetColor(Color.Gray);
 
 
-                    //Setting Top/left,right/bottom borders.
-                    var border = cell.Style.Border;
-                    border.Bottom.Style =
-                        border.Top.Style =
-                        border.Left.Style =
-                        border.Right.Style = ExcelBorderStyle.Thin;
+                        //Setting Top/left,right/bottom borders.
+                        var border = cell.Style.Border;
+                        border.Bottom.Style =
+                            border.Top.Style =
+                                border.Left.Style =
+                                    border.Right.Style = ExcelBorderStyle.Thin;
 
-                    //Setting Value in cell
-                    cell.Value = dc.ColumnName;
+                        //Setting Value in cell
+                        cell.Value = dc.ColumnName;
 
-                    colIndex++;
+                        colIndex++;
+                    }
                 }
-
+                else
+                {
+                    ws = p.Workbook.Worksheets.FirstOrDefault();
+                }
+                rowIndex = ws.Dimension.End.Row;
                 foreach (DataRow dr in dt.Rows) // Adding Data into rows
                 {
                     colIndex = 1;
