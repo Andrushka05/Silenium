@@ -141,6 +141,7 @@ namespace Silenium
         private void bProxy_Click(object sender, EventArgs e)
         {
             ProxyParser pr=new ProxyParser();
+            pr.GetProxyOnHtml("http://www.proxz.com/proxy_list_high_anonymous_1.html");
             pr.GetProxy("http://www.my-proxy.com/free-elite-proxy.html");
         }
 

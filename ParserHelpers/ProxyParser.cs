@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.IO;
+using HtmlAgilityPack;
 using java.util;
 
 namespace ParserHelpers
@@ -20,7 +21,95 @@ namespace ParserHelpers
         }
 
         public string PathFile="proxy.txt";
-        public List<string> UrlList; 
+        public List<string> UrlList;
+
+        public List<string> GetProxyOnHtml(string url)
+        {
+            var result = new List<string>();
+            var html = HtmlAgility.GetHtmlDocument(url, "http://google.com/", null);
+            if (html != null)
+            {
+                
+                var link = url.Replace("http://", "").Replace("https://", "");
+                var host = link.Substring(0, link.IndexOf("/"));
+                link = link.Substring(link.IndexOf("/") + 1, link.Length - 8 - link.IndexOf("/"));
+                var aPage = html.DocumentNode.SelectNodes("//a[contains(concat(' ', @href, ' '), '"+link+"')]");
+                if (aPage == null)
+                {
+                    var res =
+                        Regex.Matches(html.DocumentNode.InnerHtml,
+                            @"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b")
+                            .Cast<Match>()
+                            .Select(x => x.Groups[0].Value)
+                            .ToList();
+                    res = new HashSet<string>(res).ToList();
+                    var res2 =
+                        Regex.Matches(html.DocumentNode.InnerHtml,
+                            @"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b\:[0-9]{0,4}")
+                            .Cast<Match>()
+                            .Select(x => x.Groups[0].Value)
+                            .ToList();
+                    res2 = new HashSet<string>(res2).ToList();
+                    if (res2.Count == 0 || res2.Count < res.Count)
+                    {
+
+
+                        foreach (var re in res)
+                        {
+                            var table =
+                                html.DocumentNode.SelectNodes("//*[text()[contains(.,'" + re +
+                                                              "')]]/following-sibling::td[1]");
+                            var port = Regex.Replace(
+                                table[0].InnerHtml.Remove(0, table[0].InnerHtml.IndexOf(res[0]) + res[0].Length),
+                                @"[^\d]", "");
+                            result.Add(re + ":" + port);
+                        }
+                    }
+                }
+                else
+                {
+
+                    foreach (var a in aPage)
+                    {
+                        var l = a.Attributes["href"].Value;
+                        if (!l.Contains(host))
+                            l = host + l;
+                        var html2 = HtmlAgility.GetHtmlDocument(l, url, null);
+                        var res =
+                        Regex.Matches(html.DocumentNode.InnerHtml,
+                            @"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b")
+                            .Cast<Match>()
+                            .Select(x => x.Groups[0].Value)
+                            .ToList();
+                        res = new HashSet<string>(res).ToList();
+                        var res2 =
+                            Regex.Matches(html.DocumentNode.InnerHtml,
+                                @"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b\:[0-9]{0,4}")
+                                .Cast<Match>()
+                                .Select(x => x.Groups[0].Value)
+                                .ToList();
+                        res2 = new HashSet<string>(res2).ToList();
+                        if (res2.Count == 0 || res2.Count < res.Count)
+                        {
+
+
+                            foreach (var re in res)
+                            {
+                                var table =
+                                    html.DocumentNode.SelectNodes("//*[text()[contains(.,'" + re +
+                                                                  "')]]/following-sibling::td[1]");
+                                var port = Regex.Replace(
+                                    table[0].InnerHtml.Remove(0, table[0].InnerHtml.IndexOf(res[0]) + res[0].Length),
+                                    @"[^\d]", "");
+                                result.Add(re + ":" + port);
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        } 
+
         public void GetProxy(string url)
         {
             var html = HtmlAgility.GetHtmlDocument(url, "", null);
