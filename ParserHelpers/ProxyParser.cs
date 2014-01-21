@@ -8,8 +8,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.IO;
+using com.sun.org.apache.regexp.@internal;
 using HtmlAgilityPack;
 using java.util;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Firefox;
+using xNet.Net;
+using FirefoxDriver = org.openqa.selenium.firefox.FirefoxDriver;
 
 namespace ParserHelpers
 {
@@ -31,8 +36,15 @@ namespace ParserHelpers
             {
                 
                 var link = url.Replace("http://", "").Replace("https://", "");
-                var host = link.Substring(0, link.IndexOf("/"));
-                link = link.Substring(link.IndexOf("/") + 1, link.Length - 8 - link.IndexOf("/"));
+                var host = "http://" + link.Substring(0, link.IndexOf("/") + 1);
+                try
+                {
+                    link = link.Substring(link.IndexOf("/") + 1, link.Length - 8 - link.IndexOf("/"));
+                }
+                catch (Exception ex)
+                {
+                    
+                }
                 var aPage = html.DocumentNode.SelectNodes("//a[contains(concat(' ', @href, ' '), '"+link+"')]");
                 if (aPage == null)
                 {
@@ -50,20 +62,37 @@ namespace ParserHelpers
                             .Select(x => x.Groups[0].Value)
                             .ToList();
                     res2 = new HashSet<string>(res2).ToList();
+                    var res3 = Regex.Matches(WebUtility.UrlDecode(html.DocumentNode.InnerHtml), @"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)").Cast<Match>()
+                                .Select(x => x.Groups[0].Value)
+                                .ToList();
+                    res3 = new HashSet<string>(res3).ToList();
+                    if (res3.Count > res.Count)
+                        res = res3.GetRange(0, res3.Count);
                     if (res2.Count == 0 || res2.Count < res.Count)
                     {
-
+                        foreach (var re in res.GetRange(0, res.Count))
+                        {
+                            var temp = res2.Where(x => x.Contains(re));
+                            if (temp != null && temp.Any())
+                                res.Remove(re);
+                        }
+                        var doc = new HtmlAgilityPack.HtmlDocument();
+                        doc.LoadHtml(WebUtility.UrlDecode(html.DocumentNode.InnerHtml));
 
                         foreach (var re in res)
                         {
                             var table =
-                                html.DocumentNode.SelectNodes("//*[text()[contains(.,'" + re +
+                                doc.DocumentNode.SelectNodes("//*[text()[contains(.,'" + re +
                                                               "')]]/following-sibling::td[1]");
                             var port = Regex.Replace(
                                 table[0].InnerHtml.Remove(0, table[0].InnerHtml.IndexOf(res[0]) + res[0].Length),
                                 @"[^\d]", "");
                             result.Add(re + ":" + port);
                         }
+                    }
+                    else
+                    {
+                        result.AddRange(res2);
                     }
                 }
                 else
@@ -76,38 +105,55 @@ namespace ParserHelpers
                             l = host + l;
                         var html2 = HtmlAgility.GetHtmlDocument(l, url, null);
                         var res =
-                        Regex.Matches(html.DocumentNode.InnerHtml,
-                            @"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b")
+                        Regex.Matches(html2.DocumentNode.InnerHtml,
+                            @"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)")
                             .Cast<Match>()
                             .Select(x => x.Groups[0].Value)
                             .ToList();
                         res = new HashSet<string>(res).ToList();
                         var res2 =
-                            Regex.Matches(html.DocumentNode.InnerHtml,
+                            Regex.Matches(html2.DocumentNode.InnerHtml,
                                 @"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b\:[0-9]{0,4}")
                                 .Cast<Match>()
                                 .Select(x => x.Groups[0].Value)
                                 .ToList();
                         res2 = new HashSet<string>(res2).ToList();
+                        var res3 = Regex.Matches(WebUtility.UrlDecode(html2.DocumentNode.InnerHtml), @"\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)").Cast<Match>()
+                                .Select(x => x.Groups[0].Value)
+                                .ToList(); 
+                        res3 = new HashSet<string>(res3).ToList();
+                        if (res3.Count > res.Count)
+                            res = res3.GetRange(0,res3.Count);
+                        
                         if (res2.Count == 0 || res2.Count < res.Count)
                         {
-
-
+                            foreach (var re in res.GetRange(0,res.Count))
+                            {
+                                var temp = res2.Where(x => x.Contains(re));
+                                if (temp != null &&temp.Any())
+                                    res.Remove(re);
+                            }
+                            var doc = new HtmlAgilityPack.HtmlDocument();
+                            doc.LoadHtml(WebUtility.UrlDecode(html2.DocumentNode.InnerHtml));
                             foreach (var re in res)
                             {
+                                ////*[contains(text(),'match')]
                                 var table =
-                                    html.DocumentNode.SelectNodes("//*[text()[contains(.,'" + re +
-                                                                  "')]]/following-sibling::td[1]");
-                                var port = Regex.Replace(
-                                    table[0].InnerHtml.Remove(0, table[0].InnerHtml.IndexOf(res[0]) + res[0].Length),
+                                    doc.DocumentNode.SelectNodes("//*[text()[contains(.,'" + re +"')]][not(*)]");
+                                                                  //"')]/following-sibling::*[1]");
+                                var port = Regex.Replace(table[0].InnerHtml.Remove(0, table[0].InnerHtml.IndexOf(res[0]) + res[0].Length),
                                     @"[^\d]", "");
                                 result.Add(re + ":" + port);
                             }
                         }
+                        else
+                        {
+                            result.AddRange(res2);
+                        }
                     }
                 }
             }
-            return result;
+            return new List<string>(new HashSet<string>(result));
         } 
 
         public void GetProxy(string url)
@@ -142,19 +188,72 @@ namespace ParserHelpers
 
             }
         }
-
-        public List<string> CheckAvito(string path="")
+        public static bool CheckAvito(string socks)
         {
-            var list = path.Length == 0 ? File.ReadAllLines(PathFile).ToList() : File.ReadAllLines(path).ToList();
-            var res = new List<string>();
-            foreach (var l in list)
-            {
-                WebClient web=new WebClient {Proxy = new WebProxy(l)};
-                var tres = web.DownloadString("http://www.avito.ru/");
-
-            }
+            using (var request = new HttpRequest())
+                {
+                    try
+                    {
+                        request.UserAgent = HttpHelper.ChromeUserAgent();
+                        request.Proxy = Socks5ProxyClient.Parse(socks); //114.33.31.101:17012
+                        var tr = request.Get("http://www.avito.ru").ToString();
+                        return true;
+                    }
+                    catch (HttpException http)
+                    {
+                        try
+                        {
+                            if (http.Status == xNet.Net.HttpExceptionStatus.ConnectFailure)
+                            {
+                                request.Proxy = Socks4ProxyClient.Parse(socks); //114.33.31.101:17012
+                                var tr = request.Get("http://www.avito.ru").ToString();
+                                return true;
+                            }
+                        }
+                        catch (Exception exc)
+                        { }
+                    }
+                    catch (Exception ex) { }
+                }
             
-            return null;
+
+            return false;
+        }
+        public static List<string> CheckAvito(IEnumerable<string> list)
+        {
+            //var list = path.Length == 0 ? File.ReadAllLines(PathFile).ToList() : File.ReadAllLines(path).ToList();
+            var res = new List<string>();
+            Parallel.ForEach(list,l=>
+            {
+                using (var request = new HttpRequest())
+                {
+                    try
+                    {
+                        request.UserAgent = HttpHelper.ChromeUserAgent();
+                        request.ConnectTimeout = 700;
+                        request.Proxy = Socks5ProxyClient.Parse(l); //114.33.31.101:17012
+                        var tr = request.Get("http://www.avito.ru").ToString();
+                        res.Add(l);
+                    }
+                    catch (HttpException http)
+                    {
+                        try
+                        {
+                            if (http.Status == xNet.Net.HttpExceptionStatus.ConnectFailure)
+                            {
+                                request.Proxy = Socks4ProxyClient.Parse(l); //114.33.31.101:17012
+                                var tr = request.Get("http://www.avito.ru").ToString();
+                                res.Add(l);
+                            }
+                        }
+                        catch (Exception exc)
+                        { }
+                    }
+                    catch (Exception ex) { }
+                }
+            });
+            
+            return res;
         }
 
         public List<string> CheckIpToSite(IEnumerable<string> ips, string site = "http://www.avito.ru/")

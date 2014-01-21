@@ -4,13 +4,17 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using OpenQA.Selenium;
 using ParserHelpers;
+using xNet.Net;
 
 namespace Silenium
 {
@@ -23,29 +27,69 @@ namespace Silenium
 
         private List<Link> m_cityList;
         private List<Link> m_catalogList;
-
-        private void button1_Click(object sender, EventArgs e)
+        private readonly string m_pathCheckSocks = Environment.CurrentDirectory + @"\checkSocksAvito.txt";
+        private async void button1_Click(object sender, EventArgs e)
         {
-            Stopwatch st = new Stopwatch();
-            st.Start();
-            var av = new Avito();
-            var url = "http://m.avito.ru/pskov";
-            var error = "";
-            var catalogsList = av.CategoryList(url);
-            progressBar1.Maximum = 100000;//Avito.CountAds(url);
-            foreach (var link in catalogsList)
+            var tr=new Thread(()=>
             {
-                var temp = av.GetAdList(link.Url, progressBar1, ref error);
-                
-            }
-            if (error.Length > 0)
-                MessageBox.Show(error);
-            st.Stop();
-            var stds = st.Elapsed.ToString();
-            //save
-            //SaveToFile.SaveExcel2007(temp,Environment.CurrentDirectory+@"\avito1.xlsx","Avito");
-            //SaveToFile.SaveCSV(temp, Environment.CurrentDirectory + @"\avito.csv");
+                Stopwatch st = new Stopwatch();
+                st.Start();
+                var av = new Avito();
+                var url = "http://m.avito.ru/pskov";
+                //var catalogsList = av.CategoryList(url);
+                //progressBar1.Maximum = Avito.CountAds(url);
+                var proxis = new List<string>();
+                if (File.Exists(m_pathCheckSocks))
+                    proxis = File.ReadAllLines(m_pathCheckSocks).ToList();
+                proxis = ProxyParser.CheckAvito(proxis);
+                foreach (var proxi in proxis)
+                {
+                    var profile = new OpenQA.Selenium.Firefox.FirefoxProfile();
+                    var pr = new OpenQA.Selenium.Proxy { SocksProxy = proxi };
+                    profile.SetProxyPreferences(pr);
+                    IWebDriver dr = new OpenQA.Selenium.Firefox.FirefoxDriver(profile);
+                    dr.Navigate().GoToUrl(url);
+                    Thread.Sleep(7000);
+                    try
+                    {
+                        dr.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        
+                    }
+                }
+                //if (proxis.Any())
+                //{
+                //    Parallel.ForEach(catalogsList,
+                //        new ParallelOptions() {MaxDegreeOfParallelism = proxis.Count > 5 ? 5 : proxis.Count},
+                //        (link, look, i) =>
+                //        {
+                //            if (i > 5)
+                //                Thread.Sleep((int) i%5*30000);
+                //            else if (i > 0)
+                //                Thread.Sleep((int) i*30000);
+                //            var numProxy = Convert.ToInt32(i);
+                //            if (i == 0)
+                //                av.GetAdList(link.Url);
+                //            else
+                //                av.GetAdList(link.Url, proxis[numProxy]);
 
+                //        });
+                //}
+                //else
+                //{
+                //    foreach (var link in catalogsList)
+                //    {
+                //        av.GetAdList(link.Url);
+                //    }
+                //}
+
+                st.Stop();
+                var stds = st.Elapsed.ToString();
+               
+            });
+            tr.Start();
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -106,7 +150,7 @@ namespace Silenium
                 progressBar1.Maximum = Avito.CountAds(url);
                 foreach (var link in catalogsList)
                 {
-                    var temp = av.GetAdList(link.Url, progressBar1, ref error);
+                    var temp = av.GetAdList(link.Url);
                     //SaveToFile.SaveExcel2007(temp, Environment.CurrentDirectory + @"\avito1.xlsx", "Avito");
                     //SaveToFile.SaveCSV(temp, Environment.CurrentDirectory + @"\avito.csv");
                     if (error.Length > 0)
@@ -127,7 +171,7 @@ namespace Silenium
             var catalogsList = ir.CategoryList(url);
             foreach (var link in catalogsList)
             {
-                var temp = ir.GetAdList(link.Url, progressBar1, ref error);
+                var temp = ir.GetAdList(link.Url);
                 if (error.Length > 0)
                     MessageBox.Show(error);
             }
@@ -140,9 +184,28 @@ namespace Silenium
 
         private void bProxy_Click(object sender, EventArgs e)
         {
-            ProxyParser pr=new ProxyParser();
-            pr.GetProxyOnHtml("http://www.proxz.com/proxy_list_high_anonymous_1.html");
-            pr.GetProxy("http://www.my-proxy.com/free-elite-proxy.html");
+            var pr=new ProxyParser();
+            var socks1 = pr.GetProxyOnHtml("http://socksproxy-list.blogspot.ru");
+            var socks2 = pr.GetProxyOnHtml("http://us-socks.blogspot.ru");
+            var socks3 = pr.GetProxyOnHtml("http://golden-socks.blogspot.ru");
+            var socks4 = pr.GetProxyOnHtml("http://www.socks24.org");
+            var socks5 = pr.GetProxyOnHtml("http://www.socks5list.com");
+            var socks6 = pr.GetProxyOnHtml("http://www.live-socks.net");
+            var socks7 = pr.GetProxyOnHtml("http://www.proxyfire.net/forum/showthread.php?s=29192ab4a1f6133e0f7c038d68694a5c&t=67390");
+            var socks8 = pr.GetProxyOnHtml("http://www.proxyfire.net/forum/showthread.php?s=29192ab4a1f6133e0f7c038d68694a5c&t=67391");
+            var socks9 = pr.GetProxyOnHtml("http://www.vip-socks.net");
+            socks1.AddRange(socks2);
+            socks1.AddRange(socks3);
+            socks1.AddRange(socks4);
+            socks1.AddRange(socks5);
+            socks1.AddRange(socks6);
+            socks1.AddRange(socks7);
+            socks1.AddRange(socks8);
+            socks1.AddRange(socks9);
+            var res =new HashSet<string>(socks1);
+            File.WriteAllLines(Environment.CurrentDirectory+@"\parsSocks-"+DateTime.Now.Year+"-"+DateTime.Now.Month+"-"+DateTime.Now.Day+".txt",res);
+            var t=ProxyParser.CheckAvito(res);
+            File.WriteAllLines(m_pathCheckSocks, t);
         }
 
 

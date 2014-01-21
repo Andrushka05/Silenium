@@ -54,6 +54,9 @@
     <Reference Include="WebDriver.Support">
       <HintPath>E:\библиотеки\selenium-dotnet-2.39.0\net40\WebDriver.Support.dll</HintPath>
     </Reference>
+    <Reference Include="xNet">
+      <HintPath>..\packages\x-Net\xNet.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Form1.cs">

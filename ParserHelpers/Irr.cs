@@ -25,7 +25,7 @@ namespace ParserHelpers
             throw new NotImplementedException();
         }
 
-        public override List<Ir> GetAdList(string url, ProgressBar progress, ref string error)
+        public override List<Ir> GetAdList(string url,string proxy="")
         {
             //количество товаров на странице //ul class same_adds_paging/li/a[text()='60']  click()
 

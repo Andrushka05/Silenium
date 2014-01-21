@@ -12,7 +12,7 @@ using com.sun.org.apache.xerces.@internal.impl;
 using ikvm.extensions;
 using OpenQA.Selenium;
 using java.util.concurrent;
-
+using OpenQA.Selenium.Remote;
 using OpenQA.Selenium.Support.UI;
 using org.openqa.selenium;
 using org.openqa.selenium.android;
@@ -21,8 +21,8 @@ using org.openqa.selenium.htmlunit;
 using org.openqa.selenium.ie;
 using org.openqa.selenium.@internal.seleniumemulation;
 using org.openqa.selenium.phantomjs;
-using org.openqa.selenium.remote;
 using By = org.openqa.selenium.By;
+using CapabilityType = org.openqa.selenium.remote.CapabilityType;
 
 //using OpenQA.Selenium;
 //using OpenQA.Selenium.Chrome;
@@ -34,6 +34,7 @@ namespace ParserHelpers
 {
 	public class Avito:Ad<Av>
 	{
+	    private string m_fileLog = Environment.CurrentDirectory + @"\logAvito.txt";
         public Avito()
         {
             //_driver = new FirefoxDriver();
@@ -111,23 +112,22 @@ namespace ParserHelpers
 			Int32.TryParse(res, out r);
 			return r;
 		}
-		public override List<Av> GetAdList(string url, ProgressBar progress, ref string error)
+		public override List<Av> GetAdList(string url, string proxy="")
 		{
 			var adList = new List<Av>();
-            //progress.Maximum = CountAds(url);
-            
             var profile = new OpenQA.Selenium.Firefox.FirefoxProfile();
-            //String PROXY = "140.119.24.11:80";
-            //var proxy = new OpenQA.Selenium.Proxy
-            //{
-            //    HttpProxy = PROXY,
-            //    FtpProxy = PROXY,
-            //    SslProxy = PROXY
-            //};
-            //profile.SetProxyPreferences(proxy);
+            //ICapabilities cap = new DesiredCapabilities();
+		    if (proxy.Length > 0)
+		    {
+		        var pr = new OpenQA.Selenium.Proxy {SocksProxy = proxy};
+                profile.SetProxyPreferences(pr);
+                
+		    }
+            
+            //cap.setCapability(CapabilityType.PROXY, proxy);
             IWebDriver dr = new OpenQA.Selenium.Firefox.FirefoxDriver(profile);
             dr.Navigate().GoToUrl(url);
-		    dr.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(120));
+		    //dr.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(120));
 			//_driver.get(url);
 			int countError = 0;
 			for (int i = 1; ; i++)
@@ -147,8 +147,9 @@ namespace ParserHelpers
 					        dr.FindElements(OpenQA.Selenium.By.XPath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a")); //_driver.findElements(By.xpath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a"));
 					    if (links.Count == 0||links.Count<j)
 					    {
-					        Thread.Sleep(3000);
+					        Thread.Sleep(1500);
                             links =dr.FindElements(OpenQA.Selenium.By.XPath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a"));
+                            SaveToFile.SaveLog(m_fileLog,"Ошибка поиска ссылок товара на странице - "+dr.Url+", номер ссылки "+j);
 					    }
                         var link = links[j];
 						//Thread.Sleep(1000);
@@ -161,16 +162,22 @@ namespace ParserHelpers
                         //else
                         //    href = "https://m.avito.ru" + href;
 						link.Click();
-                        Thread.Sleep(1000);
+                        Thread.Sleep(300);
 						//_driver.get(href);
 						var avito = new Av();
 						avito.Url = l.Replace("/m.", "/www.");
-					    
-					    var element =
-					        dr.FindElement(OpenQA.Selenium.By.XPath("//div[contains(concat(' ', @class, ' '), 'info-price')]"));//_driver.findElement(By.xpath("//div[contains(concat(' ', @class, ' '), 'info-price')]"));
-                        element.Click();
-                        
-                        //var javascript = new JavascriptLibrary();
+					    try
+					    {
+					        var element =
+					            dr.FindElement(OpenQA.Selenium.By.XPath("//div[contains(concat(' ', @class, ' '), 'info-price')]"));
+					        //_driver.findElement(By.xpath("//div[contains(concat(' ', @class, ' '), 'info-price')]"));
+					        element.Click();
+					    }
+					    catch (Exception ex)
+					    {
+					        SaveToFile.SaveLog(m_fileLog, "Ошибка нажатия цены, на странице " + l+"\r\n"+ex);
+					    }
+					    //var javascript = new JavascriptLibrary();
                         //javascript.callEmbeddedSelenium(_driver, "triggerEvent", element, "focus");
                         Thread.Sleep(300);
                         //((JavascriptExecutor)_driver).executeScript("return document.getElementsByName('a')[0].focus()");
@@ -188,17 +195,18 @@ namespace ParserHelpers
 						            OpenQA.Selenium.By.XPath("//li[contains(concat(' ', @class, ' '), 'action-show-number')]/a"));
 						        if (p2.Text.Contains("По") || p2.Text.Contains("Попробуйте"))
 						        {
-                                    Thread.Sleep(1500);
+                                    Thread.Sleep(800);
                                     p =dr.FindElement(
                                         OpenQA.Selenium.By.XPath("//li[contains(concat(' ', @class, ' '), 'action-show-number')]/a"));
                                     p.Click();
+                                    SaveToFile.SaveLog(m_fileLog, "Вторая попытка взять номер телефона на странице " + l);
 						        }
 						    }
 						    catch (Exception ex)
 						    {
-                                error += "Не взял номер на странице: " + l + "\r\n";
+                                SaveToFile.SaveLog(m_fileLog, "Не взял номер телефона на странице " + l + "\r\nОшибка: " + ex);
 						    }
-                            Thread.Sleep(1000);
+                            Thread.Sleep(300);
 						    var html = new HtmlAgilityPack.HtmlDocument();
                             html.LoadHtml(dr.PageSource);
 							var price = HtmlAgility.GetItemInnerText(html,"//div[contains(concat(' ', @class, ' '), 'info-price')]");
@@ -254,14 +262,11 @@ namespace ParserHelpers
 						}
 						catch (Exception ex)
 						{
-							error +="Ошибка на странице: "+l+ "\r\nlog:"+ex+"\r\n";
-							
+							SaveToFile.SaveLog(m_fileLog, "Ошибка при получении данных на странице " + l + "\r\nОшибка: " + ex);
 						}
 						adList.Add(avito);
-						progress.Value++;
-						progress.Refresh();
-                        dr.Navigate().Back();
-                        Thread.Sleep(800);
+						dr.Navigate().Back();
+                        Thread.Sleep(300);
                         SaveToFile.SaveExcel2007(adList, Environment.CurrentDirectory + @"\avito1.xlsx", "Avito");
 						//var temps1 = dr.PageSource; //_driver.getPageSource();
                     }
@@ -275,10 +280,10 @@ namespace ParserHelpers
                     }
                     catch (Exception ex)
                     {
-                        error += "Эта страница последняя: " + url + "?p=" + i + "\r\nlog:" + ex + "\r\n";
+                        SaveToFile.SaveLog(m_fileLog, "Эта страница последняя в данном каталоге: " + dr.Url + "\r\nОшибка: " + ex);
                         break;
                     }
-                    SaveToFile.SaveExcel2007(adList, Environment.CurrentDirectory + @"\avito1.xlsx", "Avito");
+                    SaveToFile.SaveExcel2007(adList, Environment.CurrentDirectory + @"\avito2.xlsx", "Avito");
                     //SaveToFile.SaveCSV(adList, Environment.CurrentDirectory + @"\avito.csv");
                     adList=new List<Av>();
 
@@ -286,7 +291,7 @@ namespace ParserHelpers
                 catch (Exception ex)
                 {
                     countError++;
-                    error += "Не удалось загрузить страницу: " + url + "?p=" + i + "\r\nlog:" + ex + "\r\n";
+                    SaveToFile.SaveLog(m_fileLog, "Не удалось получить объявления из " + dr.Url + "\r\nОшибка: " + ex);
                     if (countError == 7)
                         break;
                     else if (countError > 2)
@@ -295,8 +300,8 @@ namespace ParserHelpers
                 }
 			}
 
-			_driver.quit();
-            _driver.close();
+			dr.Quit();
+            dr.Close();
             
 			return adList;
 		}

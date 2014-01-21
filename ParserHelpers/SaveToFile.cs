@@ -17,6 +17,13 @@ namespace ParserHelpers
 {
     public static class SaveToFile
     {
+        public static void SaveLog(string path, string log)
+        {
+            if(File.Exists(path))
+                File.AppendAllText(path,DateTime.Now+":"+log+"\r\n\r\n");
+            else
+                File.WriteAllText(path, log + "\r\n\r\n");
+        }
         public static void SaveXml<T>(IEnumerable<T> list, string path, string nameRootElement)
         {
             Type itemType = typeof(T);

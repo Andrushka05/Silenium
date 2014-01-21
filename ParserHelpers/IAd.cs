@@ -11,7 +11,7 @@ namespace ParserHelpers
     {
         void Login(string email, string pass);
         void LogOut();
-        List<T> GetAdList(string url, ProgressBar progress, ref string error);
+        List<T> GetAdList(string url, string proxy);
         bool PlaceAd(List<T> adList);
         List<Link> CategoryList(string link);
         List<Link> CityList();

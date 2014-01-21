@@ -15,7 +15,7 @@ namespace ParserHelpers
         protected WebDriver _driver;
         public abstract void Login(string email, string pass);
         public abstract void LogOut();
-        public abstract List<T> GetAdList(string url, ProgressBar progress, ref string error);
+        public abstract List<T> GetAdList(string url, string proxy);
         public abstract bool PlaceAd(List<T> adList);
         public abstract List<Link> CategoryList(string link);
         public abstract List<Link> CityList();
