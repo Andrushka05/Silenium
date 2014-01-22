@@ -28,7 +28,7 @@ namespace ParserHelpers
         public string PathFile="proxy.txt";
         public List<string> UrlList;
 
-        public List<string> GetProxyOnHtml(string url)
+				public static List<string> GetProxyOnHtml(string url)
         {
             var result = new List<string>();
             var html = HtmlAgility.GetHtmlDocument(url, "http://google.com/", null);
@@ -196,7 +196,7 @@ namespace ParserHelpers
                     {
                         request.UserAgent = HttpHelper.ChromeUserAgent();
                         request.Proxy = Socks5ProxyClient.Parse(socks); //114.33.31.101:17012
-                        var tr = request.Get("http://www.avito.ru").ToString();
+												var tr = request.Get("http://m.avito.ru/pskov/vakansii/").ToString();
                         return true;
                     }
                     catch (HttpException http)
@@ -206,7 +206,7 @@ namespace ParserHelpers
                             if (http.Status == xNet.Net.HttpExceptionStatus.ConnectFailure)
                             {
                                 request.Proxy = Socks4ProxyClient.Parse(socks); //114.33.31.101:17012
-                                var tr = request.Get("http://www.avito.ru").ToString();
+																var tr = request.Get("http://m.avito.ru/pskov/vakansii/").ToString();
                                 return true;
                             }
                         }

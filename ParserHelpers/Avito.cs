@@ -175,7 +175,7 @@ namespace ParserHelpers
 					    }
 					    catch (Exception ex)
 					    {
-					        SaveToFile.SaveLog(m_fileLog, "Ошибка нажатия цены, на странице " + l+"\r\n"+ex);
+								SaveToFile.SaveLog(m_fileLog, "Ошибка нажатия цены, на странице " + l + "\r\n" + ex.Message + "\r\n\r\n");
 					    }
 					    //var javascript = new JavascriptLibrary();
                         //javascript.callEmbeddedSelenium(_driver, "triggerEvent", element, "focus");
@@ -204,7 +204,7 @@ namespace ParserHelpers
 						    }
 						    catch (Exception ex)
 						    {
-                                SaveToFile.SaveLog(m_fileLog, "Не взял номер телефона на странице " + l + "\r\nОшибка: " + ex);
+									SaveToFile.SaveLog(m_fileLog, "Не взял номер телефона на странице " + l + "\r\nОшибка: " + ex.Message + "\r\n\r\n");
 						    }
                             Thread.Sleep(300);
 						    var html = new HtmlAgilityPack.HtmlDocument();
@@ -262,7 +262,7 @@ namespace ParserHelpers
 						}
 						catch (Exception ex)
 						{
-							SaveToFile.SaveLog(m_fileLog, "Ошибка при получении данных на странице " + l + "\r\nОшибка: " + ex);
+							SaveToFile.SaveLog(m_fileLog, "Ошибка при получении данных на странице " + l + "\r\nОшибка: " + ex.Message);
 						}
 						adList.Add(avito);
 						dr.Navigate().Back();
@@ -280,7 +280,7 @@ namespace ParserHelpers
                     }
                     catch (Exception ex)
                     {
-                        SaveToFile.SaveLog(m_fileLog, "Эта страница последняя в данном каталоге: " + dr.Url + "\r\nОшибка: " + ex);
+											SaveToFile.SaveLog(m_fileLog, "Эта страница последняя в данном каталоге: " + dr.Url + "\r\nОшибка: " + ex + "\r\n\r\n");
                         break;
                     }
                     SaveToFile.SaveExcel2007(adList, Environment.CurrentDirectory + @"\avito2.xlsx", "Avito");
@@ -291,7 +291,7 @@ namespace ParserHelpers
                 catch (Exception ex)
                 {
                     countError++;
-                    SaveToFile.SaveLog(m_fileLog, "Не удалось получить объявления из " + dr.Url + "\r\nОшибка: " + ex);
+										SaveToFile.SaveLog(m_fileLog, "Не удалось получить объявления из " + dr.Url + "\r\nОшибка: " + ex.Message + "\r\n\r\n");
                     if (countError == 7)
                         break;
                     else if (countError > 2)
@@ -300,8 +300,7 @@ namespace ParserHelpers
                 }
 			}
 
-			dr.Quit();
-            dr.Close();
+			dr.Close();
             
 			return adList;
 		}

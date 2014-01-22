@@ -36,54 +36,67 @@ namespace Silenium
                 st.Start();
                 var av = new Avito();
                 var url = "http://m.avito.ru/pskov";
-                //var catalogsList = av.CategoryList(url);
-                //progressBar1.Maximum = Avito.CountAds(url);
-                var proxis = new List<string>();
-                if (File.Exists(m_pathCheckSocks))
-                    proxis = File.ReadAllLines(m_pathCheckSocks).ToList();
-                proxis = ProxyParser.CheckAvito(proxis);
-                foreach (var proxi in proxis)
-                {
-                    var profile = new OpenQA.Selenium.Firefox.FirefoxProfile();
-                    var pr = new OpenQA.Selenium.Proxy { SocksProxy = proxi };
-                    profile.SetProxyPreferences(pr);
-                    IWebDriver dr = new OpenQA.Selenium.Firefox.FirefoxDriver(profile);
-                    dr.Navigate().GoToUrl(url);
-                    Thread.Sleep(7000);
-                    try
-                    {
-                        dr.Close();
-                    }
-                    catch (Exception ex)
-                    {
-                        
-                    }
-                }
-                //if (proxis.Any())
-                //{
-                //    Parallel.ForEach(catalogsList,
-                //        new ParallelOptions() {MaxDegreeOfParallelism = proxis.Count > 5 ? 5 : proxis.Count},
-                //        (link, look, i) =>
-                //        {
-                //            if (i > 5)
-                //                Thread.Sleep((int) i%5*30000);
-                //            else if (i > 0)
-                //                Thread.Sleep((int) i*30000);
-                //            var numProxy = Convert.ToInt32(i);
-                //            if (i == 0)
-                //                av.GetAdList(link.Url);
-                //            else
-                //                av.GetAdList(link.Url, proxis[numProxy]);
+								var catalogsList = av.CategoryList(url);
+								//progressBar1.Maximum = Avito.CountAds(url);
+								//var proxis = new List<string>();
+								//if (File.Exists(m_pathCheckSocks))
+								//		proxis = File.ReadAllLines(m_pathCheckSocks).ToList();
+								//proxis = ProxyParser.CheckAvito(proxis);
+								//var temps = new List<string>();
+								//foreach (var proxi in proxis)
+								//{
+								//	var profile = new OpenQA.Selenium.Firefox.FirefoxProfile();
+								//	var pr = new OpenQA.Selenium.Proxy { SocksProxy = proxi };
+								//	profile.SetProxyPreferences(pr);
+								//	IWebDriver dr = new OpenQA.Selenium.Firefox.FirefoxDriver(profile);
+								//	dr.Navigate().GoToUrl("http://m.avito.ru/pskov/vakansii");
+									
+								//	try
+								//	{
+								//		var links = dr.FindElements(OpenQA.Selenium.By.XPath("//article[contains(concat(' ', @class, ' '), 'b-item')]/a"));
+								//		links[0].Click();
+								//		var click = dr.FindElement(OpenQA.Selenium.By.XPath("//li[contains(concat(' ', @class, ' '), 'action-show-number')]/a"));
+								//		click.Click();
+								//		var cl2 = dr.FindElement(OpenQA.Selenium.By.XPath("//li[contains(concat(' ', @class, ' '), 'action-show-number')]/a"));
 
-                //        });
-                //}
-                //else
-                //{
-                //    foreach (var link in catalogsList)
-                //    {
-                //        av.GetAdList(link.Url);
-                //    }
-                //}
+								//		Thread.Sleep(7000);
+								//		dr.Close();
+								//		if (!cl2.Text.Contains("Показ") && !cl2.Text.Contains("Попро"))
+								//			temps.Add(proxi);
+								//	}
+								//	catch (Exception ex)
+								//	{
+
+								//	}
+								//}
+								//if (proxis.Any())
+								//{
+								//	Parallel.ForEach(catalogsList,
+								//			new ParallelOptions() { MaxDegreeOfParallelism = proxis.Count > 5 ? 5 : proxis.Count },
+								//			(link, look, i) =>
+								//			{
+								//				if (i > 5)
+								//					Thread.Sleep((int)i % 5 * 30000);
+								//				else if (i > 0)
+								//					Thread.Sleep((int)i * 30000);
+								//				var numProxy = Convert.ToInt32(i);
+								//				if (i == 0)
+								foreach (var link in catalogsList)
+								{
+									av.GetAdList(link.Url);
+								}
+								//				else
+								//					av.GetAdList(link.Url, proxis[numProxy]);
+
+								//			});
+								//}
+								//else
+								//{
+								//	foreach (var link in catalogsList)
+								//	{
+								//		av.GetAdList(link.Url);
+								//	}
+								//}
 
                 st.Stop();
                 var stds = st.Elapsed.ToString();
@@ -185,25 +198,28 @@ namespace Silenium
         private void bProxy_Click(object sender, EventArgs e)
         {
             var pr=new ProxyParser();
-            var socks1 = pr.GetProxyOnHtml("http://socksproxy-list.blogspot.ru");
-            var socks2 = pr.GetProxyOnHtml("http://us-socks.blogspot.ru");
-            var socks3 = pr.GetProxyOnHtml("http://golden-socks.blogspot.ru");
-            var socks4 = pr.GetProxyOnHtml("http://www.socks24.org");
-            var socks5 = pr.GetProxyOnHtml("http://www.socks5list.com");
-            var socks6 = pr.GetProxyOnHtml("http://www.live-socks.net");
-            var socks7 = pr.GetProxyOnHtml("http://www.proxyfire.net/forum/showthread.php?s=29192ab4a1f6133e0f7c038d68694a5c&t=67390");
-            var socks8 = pr.GetProxyOnHtml("http://www.proxyfire.net/forum/showthread.php?s=29192ab4a1f6133e0f7c038d68694a5c&t=67391");
-            var socks9 = pr.GetProxyOnHtml("http://www.vip-socks.net");
-            socks1.AddRange(socks2);
-            socks1.AddRange(socks3);
-            socks1.AddRange(socks4);
-            socks1.AddRange(socks5);
-            socks1.AddRange(socks6);
-            socks1.AddRange(socks7);
-            socks1.AddRange(socks8);
-            socks1.AddRange(socks9);
-            var res =new HashSet<string>(socks1);
+						var socks = new List<string>();
+						var urlSocks = new List<string>(){"http://socksproxy-list.blogspot.ru","http://us-socks.blogspot.ru",
+																							"http://golden-socks.blogspot.ru","http://www.socks24.org","http://www.socks5list.com",
+																							"http://www.live-socks.net","http://www.vip-socks.net","http://socks5proxyus.blogspot.ru/"};
+						Parallel.ForEach(urlSocks, link => {
+							socks.AddRange(ProxyParser.GetProxyOnHtml(link));
+						});
+						var proxy = new List<string>();
+						proxy.AddRange(ProxyParser.GetProxyOnHtml("http://free-proxyserverlist.blogspot.ru/"));
+						proxy.AddRange(ProxyParser.GetProxyOnHtml("http://google-proxies.blogspot.ru/"));
+						proxy.AddRange(ProxyParser.GetProxyOnHtml("http://proxycollections.blogspot.ru/"));
+						proxy.AddRange(ProxyParser.GetProxyOnHtml("http://free-ssl-proxy.blogspot.ru/"));
+						proxy.AddRange(ProxyParser.GetProxyOnHtml("http://irc-proxies.blogspot.ru/"));
+						proxy.AddRange(ProxyParser.GetProxyOnHtml("http://new-daily-proxies.blogspot.ru/"));
+						proxy.AddRange(ProxyParser.GetProxyOnHtml("http://newfresh-proxies.blogspot.ru/"));
+						proxy.AddRange(ProxyParser.GetProxyOnHtml("http://proxy-server-free.blogspot.ru/"));
+						proxy.AddRange(ProxyParser.GetProxyOnHtml("http://www.proxies24.org/"));
+						proxy.AddRange(ProxyParser.GetProxyOnHtml("http://www.seoproxies.blogspot.ru/"));
+						var res =new HashSet<string>(socks);
+						var res2 = new HashSet<string>(proxy);
             File.WriteAllLines(Environment.CurrentDirectory+@"\parsSocks-"+DateTime.Now.Year+"-"+DateTime.Now.Month+"-"+DateTime.Now.Day+".txt",res);
+						File.WriteAllLines(Environment.CurrentDirectory + @"\parsProxy-" + DateTime.Now.Year + "-" + DateTime.Now.Month + "-" + DateTime.Now.Day + ".txt", res2);
             var t=ProxyParser.CheckAvito(res);
             File.WriteAllLines(m_pathCheckSocks, t);
         }

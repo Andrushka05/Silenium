@@ -33,7 +33,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Selenium.WebDriverBackedSelenium">
-      <HintPath>E:\библиотеки\selenium-dotnet-2.39.0\net40\Selenium.WebDriverBackedSelenium.dll</HintPath>
+      <HintPath>..\packages\selenium-dotnet-2.39.0\net40\Selenium.WebDriverBackedSelenium.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -46,13 +46,13 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="ThoughtWorks.Selenium.Core">
-      <HintPath>E:\библиотеки\selenium-dotnet-2.39.0\net40\ThoughtWorks.Selenium.Core.dll</HintPath>
+      <HintPath>..\packages\selenium-dotnet-2.39.0\net40\ThoughtWorks.Selenium.Core.dll</HintPath>
     </Reference>
     <Reference Include="WebDriver">
-      <HintPath>E:\библиотеки\selenium-dotnet-2.39.0\net40\WebDriver.dll</HintPath>
+      <HintPath>..\packages\selenium-dotnet-2.39.0\net40\WebDriver.dll</HintPath>
     </Reference>
     <Reference Include="WebDriver.Support">
-      <HintPath>E:\библиотеки\selenium-dotnet-2.39.0\net40\WebDriver.Support.dll</HintPath>
+      <HintPath>..\packages\selenium-dotnet-2.39.0\net40\WebDriver.Support.dll</HintPath>
     </Reference>
     <Reference Include="xNet">
       <HintPath>..\packages\x-Net\xNet.dll</HintPath>
